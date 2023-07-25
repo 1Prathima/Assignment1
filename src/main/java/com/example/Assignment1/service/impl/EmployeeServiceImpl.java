@@ -32,10 +32,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public String addEmployee(Employee employee) throws EmailAlreadyPresentException {
+        //checking if email is unique
         if(employeeRepository.findByEmail(employee.getEmail()) != null){
             throw new EmailAlreadyPresentException("This email id is already registered");
         }
 
+        //create a new employee and set parameters
         Employee employee1 = new Employee();
         employee1.setEmployeeName(employee.getEmployeeName());
         employee1.setPhoneNumber(employee.getPhoneNumber());
@@ -43,9 +45,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee1.setReportsTo(employee.getReportsTo());
         employee1.setProfileImage(employee.getProfileImage());
         employee1.setId(String.valueOf(UUID.randomUUID()));
-        employeeRepository.save(employee1);
+        employeeRepository.save(employee1);  //adding the new employee to database
 
-//        sending mail
+       //sending mail to the manager when a new employee is added to the database
         SimpleMailMessage message = new SimpleMailMessage();  //class that is used to send mails
         message.setFrom("prat226999@gmail.com");
         Employee employee2 = employeeRepository.findById(employee1.getReportsTo()).get();
@@ -59,35 +61,41 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();
+        return employeeRepository.findAll(); //returns list of all employees
     }
 
     @Override
     public void deleteById(EmployeeIdDto employeeId) throws InvalidIdException {
+        //ID validation
         if(employeeRepository.findById(employeeId.getId()).get() == null){
             throw new InvalidIdException("Invalid Id");
         }
+        //deleting the employee from database
         employeeRepository.deleteById(employeeId.getId());
     }
 
     @Override
     public void updateById(Employee employee) throws InvalidIdException {
         Employee employee1 = employeeRepository.findById(employee.getId()).get();
+        //ID validation
         if(employee1 == null){
             throw new InvalidIdException("Invalid Id");
         }
+        //updating the details of employee
         employee1.setEmployeeName(employee.getEmployeeName());
         employee1.setPhoneNumber(employee.getPhoneNumber());
         employee1.setEmail(employee.getEmail());
         employee1.setReportsTo(employee.getReportsTo());
         employee1.setProfileImage(employee.getProfileImage());
 
+        //saving the updated employee
         employeeRepository.save(employee1);
     }
 
     @Override
     public Employee getNthManagerOfEmployee(ManagerOfEmployeeRequestDto managerOfEmployeeRequestDto) throws InvalidIdException, NthLevelManagerException {
         Employee employee = employeeRepository.findById(managerOfEmployeeRequestDto.getEmployeeId()).get();
+        //Id validation
         if(employee == null){
             throw new InvalidIdException("Employee Id is invalid.");
         }
@@ -96,6 +104,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         Employee manager = null;
         String managerId = null;
 
+        if(n==0){
+            return null;
+        }
+
+        //gettng nth level manager
         try {
             if (n == 1) {
                 managerId = employee.getReportsTo();
